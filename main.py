@@ -40,6 +40,27 @@ def authenticate(users):
     else:
         print("Usuario o contraseña incorrectos.")
         return False
+
+# Cargar tareas desde el CSV
+def load_tasks_from_csv():
+    try:
+        with open(tasks_file, mode='r', newline='') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                task = Task(
+                    row["title"],
+                    row["description"],
+                    row["due_date"],
+                    row["label"],
+                    row["state"],
+                    row["completed_at"] if row["completed_at"] != '' else None
+                )
+                tasks.append(task)
+    except FileNotFoundError:
+        print("No se encontró el archivo CSV de tareas. Creando uno nuevo...")
+
 # Ejecución del programa
 if __name__ == "__main__":
     users = load_users_from_csv()
+    if authenticate(users):
+        load_tasks_from_csv()
