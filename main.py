@@ -2,6 +2,16 @@ import csv
 import getpass
 from datetime import datetime
 
+import logging
+
+# Configuración básica de logging
+logging.basicConfig(
+    filename='app.log', 
+    level=logging.INFO, 
+    format='%(asctime)s %(levelname)s: %(message)s', 
+    datefmt='%d/%m/%Y %H:%M:%S'
+)
+
 # Simulación de base de datos
 users_file = "users.csv"
 tasks_file = "tasks.csv"
@@ -29,10 +39,10 @@ def load_users_from_csv():
             for row in reader:
                 users[row["username"]] = row["password"]
     except FileNotFoundError:
-        print("No se encontró el archivo de usuarios. Necesitamos crear un usuario administrador.")
+        logging.warning("No se encontró el archivo de usuarios. Necesitamos crear un usuario administrador.")
         create_first_user(users)
     return users
-    
+
 # Crear primer usuario si el archivo de usuarios no existe
 def create_first_user(users):
     print("Creando el primer usuario:")
@@ -43,7 +53,7 @@ def create_first_user(users):
         writer = csv.DictWriter(file, fieldnames=["username", "password"])
         writer.writeheader()
         writer.writerow({"username": username, "password": password})
-    print(f"Usuario '{username}' creado exitosamente.")
+    logging.info(f"Primer usuario '{username}' creado.")
 
 # Autenticación de usuario
 def authenticate(users):
@@ -51,10 +61,10 @@ def authenticate(users):
     password = getpass.getpass("Contraseña: ")
     
     if username in users and users[username] == password:
-        print(f"Bienvenido {username}!")
+        logging.info(f"Autenticación exitosa para el usuario '{username}'.")
         return True
     else:
-        print("Usuario o contraseña incorrectos.")
+        logging.warning(f"Falló la autenticación para el usuario '{username}'.")
         return False
 
 # Cargar tareas desde el CSV
@@ -72,8 +82,9 @@ def load_tasks_from_csv():
                     row["completed_at"] if row["completed_at"] != '' else None
                 )
                 tasks.append(task)
+        logging.info("Tareas cargadas desde el archivo CSV.")
     except FileNotFoundError:
-        print("No se encontró el archivo CSV de tareas. Creando uno nuevo...")
+        logging.warning("No se encontró el archivo CSV de tareas. Creando uno nuevo...")
 
 # Guardar tareas en el CSV
 def save_tasks_to_csv():
@@ -90,6 +101,7 @@ def save_tasks_to_csv():
                 "state": task.state,
                 "completed_at": task.completed_at if task.completed_at else ''
             })
+    logging.info("Tareas guardadas en el archivo CSV.")
 
 # Gestión de Tareas
 def create_task():
@@ -100,7 +112,7 @@ def create_task():
     task = Task(title, description, due_date, label)
     tasks.append(task)
     save_tasks_to_csv()
-    print("Tarea creada exitosamente.")
+    logging.info(f"Tarea '{title}' creada exitosamente.")
 
 def list_tasks():
     if tasks:
@@ -118,8 +130,9 @@ def update_task():
         tasks[task_id].due_date = input("Nueva fecha de vencimiento (YYYY-MM-DD): ")
         tasks[task_id].label = input("Nueva etiqueta: ")
         save_tasks_to_csv()
-        print("Tarea actualizada exitosamente.")
+        logging.info(f"Tarea '{tasks[task_id].title}' actualizada.")
     else:
+        logging.warning(f"Intento de actualización fallido: Tarea con índice {task_id} no encontrada.")
         print("Tarea no encontrada.")
 
 def delete_task():
@@ -128,8 +141,9 @@ def delete_task():
     if 0 <= task_id < len(tasks):
         tasks.pop(task_id)
         save_tasks_to_csv()
-        print("Tarea eliminada.")
+        logging.info(f"Tarea '{task_title}' eliminada.")
     else:
+        logging.warning(f"Intento de eliminación fallido: Tarea con índice {task_id} no encontrada.")
         print("Tarea no encontrada.")
 
 # Filtrado y búsqueda
@@ -146,12 +160,14 @@ def filter_tasks():
         filtered_tasks = [task for task in tasks if task.state == state]
     else:
         print("Criterio inválido.")
+        logging.warning("Criterio de filtrado inválido.")
         return
     
     if filtered_tasks:
         for task in filtered_tasks:
             print(task)
     else:
+        logging.info("No se encontraron tareas que coincidan con el criterio.")
         print("No se encontraron tareas que coincidan con el criterio.")
 
 # Cambiar el estado de las tareas
@@ -165,10 +181,12 @@ def update_task_status():
             if new_status == "completed":
                 tasks[task_id].completed_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             save_tasks_to_csv()
-            print("Estado de la tarea actualizado.")
+            logging.info(f"Estado de la tarea '{tasks[task_id].title}' actualizado a '{new_status}'.")
         else:
+            logging.warning("Estado inválido.")
             print("Estado inválido.")
     else:
+        logging.warning(f"Intento de actualización de estado fallido: Tarea con índice {task_id} no encontrada.")
         print("Tarea no encontrada.")
 
 # Menú principal
@@ -197,6 +215,7 @@ def main_menu():
         elif option == "6":
             update_task_status()
         elif option == "7":
+            logging.info("Aplicación cerrada por el usuario.")
             print("Saliendo...")
             break
         else:
