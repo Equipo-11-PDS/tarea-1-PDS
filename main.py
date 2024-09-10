@@ -29,6 +29,30 @@ class Task:
     def __repr__(self):
         return f"Tarea: {self.title} | Estado: {self.state} | Vencimiento: {self.due_date}"
 
+def verify_date_format(date_str):
+    try:
+        datetime.strptime(date_str, '%Y-%m-%d')
+        return True
+    except ValueError:
+        return False
+
+def input_valid_date():
+    while True:
+        date_input = input("Fecha de vencimiento (YYYY-MM-DD): ")
+        if verify_date_format(date_input):
+            return date_input
+        else:
+            print("Formato de fecha inválido. Por favor, ingrese la fecha en formato YYYY-MM-DD.")
+
+# Función para validar que un campo no esté vacío
+def input_non_empty(prompt):
+    while True:
+        value = input(prompt)
+        if value.strip():
+            return value
+        else:
+            print("Este campo no puede quedar vacío. Por favor, ingrese un valor.")
+
 # Función para cargar usuarios desde el CSV
 def load_users_from_csv():
     users = {}
@@ -49,7 +73,7 @@ def load_users_from_csv():
 def create_first_user(users):
     try:
         print("Creando el primer usuario:")
-        username = input("Ingrese el nombre de usuario: ")
+        username = input_non_empty("Ingrese el nombre de usuario: ")
         password = getpass.getpass("Ingrese la contraseña: ")
         users[username] = password
         with open(users_file, mode='w', newline='') as file:
@@ -123,10 +147,10 @@ def save_tasks_to_csv():
 # Gestión de Tareas
 def create_task():
     try:
-        title = input("Título de la tarea: ")
-        description = input("Descripción de la tarea: ")
-        due_date = input("Fecha de vencimiento (YYYY-MM-DD): ")
-        label = input("Etiqueta (urgente, trabajo, personal, etc.): ")
+        title = input_non_empty("Título de la tarea: ")
+        description = input_non_empty("Descripción de la tarea: ")
+        due_date = input_valid_date()
+        label = input_non_empty("Etiqueta (urgente, trabajo, personal, etc.): ")
         task = Task(title, description, due_date, label)
         tasks.append(task)
         save_tasks_to_csv()
@@ -151,10 +175,10 @@ def update_task():
         list_tasks()
         task_id = int(input("Número de la tarea que desea actualizar: ")) - 1
         if 0 <= task_id < len(tasks):
-            tasks[task_id].title = input("Nuevo título: ")
-            tasks[task_id].description = input("Nueva descripción: ")
-            tasks[task_id].due_date = input("Nueva fecha de vencimiento (YYYY-MM-DD): ")
-            tasks[task_id].label = input("Nueva etiqueta: ")
+            tasks[task_id].title = input_non_empty("Nuevo título: ")
+            tasks[task_id].description = input_non_empty("Nueva descripción: ")
+            tasks[task_id].due_date = input_valid_date()
+            tasks[task_id].label = input_non_empty("Nueva etiqueta: ")
             save_tasks_to_csv()
             logging.info(f"Tarea '{tasks[task_id].title}' actualizada.")
             print("Tarea actualizada exitosamente.")
@@ -193,7 +217,7 @@ def filter_tasks():
     try:
         criteria = input("Filtrar por (fecha, etiqueta, estado): ").lower()
         if criteria == "fecha":
-            date = input("Ingrese la fecha (YYYY-MM-DD): ")
+            date = input_valid_date()
             filtered_tasks = [task for task in tasks if task.due_date == date]
         elif criteria == "etiqueta":
             label = input("Ingrese la etiqueta: ")
